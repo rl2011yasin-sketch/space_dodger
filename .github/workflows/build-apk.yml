@@ -33,9 +33,37 @@ jobs:
       run: |
         pip install --upgrade buildozer cython
 
+    - name: Auto-Fix Buildozer Spec
+      run: |
+        # اصلاح خودکار فایل buildozer.spec بدون نیاز به دخالت دستی
+        sed -i 's/^# android.ndk =.*/android.ndk = 25c/' buildozer.spec || true
+        sed -i 's/^android.ndk =.*/android.ndk = 25c/' buildozer.spec || true
+        sed -i 's/^# android.api =.*/android.api = 33/' buildozer.spec || true
+        sed -i 's/^android.api =.*/android.api = 33/' buildozer.spec || true
+        sed -i 's/^# android.minapi =.*/android.minapi = 24/' buildozer.spec || true
+        sed -i 's/^android.minapi =.*/android.minapi = 24/' buildozer.spec || true
+        sed -i 's/^# log_level =.*/log_level = 2/' buildozer.spec || true
+        sed -i 's/^log_level =.*/log_level = 2/' buildozer.spec || true
+        # اطمینان از اینکه تنظیمات اعمال شده
+        grep -E "android.ndk|android.api|log_level" buildozer.spec
+
+    - name: Add Swap Space (Prevent Crash)
+      run: |
+        # اضافه کردن ۴ گیگابایت رم مجازی برای جلوگیری از کرش (Broken pipe)
+        sudo fallocate -l 4G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+
     - name: Build APK
       run: |
         yes | buildozer -v android debug
+
+    - name: Print Build Errors (If Failed)
+      if: failure()
+      run: |
+        echo "جستجوی خطای اصلی در لاگ‌ها..."
+        find .buildozer -name "*.log" -exec tail -n 50 {} \; | grep -i "error" -A 5 -B 5 || true
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
