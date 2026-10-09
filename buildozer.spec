@@ -13,16 +13,18 @@ requirements = python3,kivy
 orientation = portrait
 fullscreen = 1
 
-icon.filename = %(source.dir)s/data/icon.png
-presplash.filename = %(source.dir)s/data/presplash.png
+icon.filename = %(source.dir)s/icon.png
+presplash.filename = %(source.dir)s/presplash.png
 presplash.color = #0A0A0E
 
 # --- Android ---------------------------------------------------------
-# No special permissions needed (high score is stored in the app sandbox).
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
 android.accept_sdk_license = True
-# API level / NDK: intentionally left at Buildozer's tested defaults.
+android.api = 33
+android.minapi = 24
+android.ndk = 25b
+android.sdk = 24.0
 
 [buildozer]
 log_level = 2
