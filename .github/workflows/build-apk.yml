@@ -27,7 +27,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev automake
+        sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev automake libltdl-dev
 
     - name: Install Buildozer and Cython
       run: |
@@ -37,18 +37,20 @@ jobs:
       run: |
         sed -i 's/^# android.ndk =.*/android.ndk = 25c/' buildozer.spec || true
         sed -i 's/^android.ndk =.*/android.ndk = 25c/' buildozer.spec || true
+        sed -i 's/^# android.ndk_api =.*/android.ndk_api = 24/' buildozer.spec || true
+        sed -i 's/^android.ndk_api =.*/android.ndk_api = 24/' buildozer.spec || true
         sed -i 's/^# android.api =.*/android.api = 33/' buildozer.spec || true
         sed -i 's/^android.api =.*/android.api = 33/' buildozer.spec || true
+        sed -i 's/^# p4a.branch =.*/p4a.branch = develop/' buildozer.spec || true
+        sed -i 's/^p4a.branch =.*/p4a.branch = develop/' buildozer.spec || true
         sed -i 's/^# log_level =.*/log_level = 2/' buildozer.spec || true
         sed -i 's/^log_level =.*/log_level = 2/' buildozer.spec || true
-        grep -E "android.ndk|android.api|log_level" buildozer.spec
+        grep -E "android.ndk|android.api|p4a.branch|log_level" buildozer.spec
 
     - name: Add Swap Space (Prevent Crash)
       run: |
-        # خاموش کردن و پاک کردن فایل سواپ قبلی برای جلوگیری از ارور Busy
         sudo swapoff -a || true
         sudo rm -f /swapfile || true
-        # ساخت فایل سواپ جدید
         sudo fallocate -l 4G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
@@ -56,6 +58,14 @@ jobs:
 
     - name: Build APK
       run: |
+        # پیدا کردن مسیر NDK 25c که بیلدوزر دانلود کرده
+        NDK_PATH=$(find $HOME/.buildozer -name "android-ndk-*" -maxdepth 3 -type d | head -n 1)
+        echo "Using NDK Path: $NDK_PATH"
+        
+        # مجبور کردن بیلدوزر به استفاده از این NDK (نه نسخه سیستمی 27)
+        export ANDROIDNDK="$NDK_PATH"
+        export ANDROIDNDK_HOME="$NDK_PATH"
+        
         yes | buildozer -v android debug
 
     - name: Upload APK
